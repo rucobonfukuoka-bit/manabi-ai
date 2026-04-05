@@ -814,20 +814,18 @@ function hideLoad(id) { document.getElementById(id).classList.remove('show'); }
 // =====================
 // Claude API call
 // =====================
-async function callClaude(systemPrompt, userMessage) {
-  // safeParseJSON helper
-
-  const key = getApiKey();
-  if (!key) { showApiModal(); throw new Error('APIキーが未設定です'); }
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system: systemPrompt, message: userMessage })
-  });
-  if (!res.ok) throw new Error('APIエラー: ' + res.status);
-  const data = await res.json();
-  return data.content || '';
+function safeParseJSON(raw) {
+  raw = raw.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(raw); } catch(e) {}
+  const arrMatch = raw.match(/\[[\s\S]*\]/);
+  if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch(e2) {} }
+  throw new Error('JSONの解析に失敗しました');
 }
+
+// =====================
+// Claude API call
+// =====================
+async function callClaude(systemPrompt, userMessage) {
 
 // =====================
 // 復習テスト
