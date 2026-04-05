@@ -521,6 +521,14 @@
           </div>
         </div>
 
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">学年</label>
+            <select class="form-select" id="review-grade">
+              <option>中学1年</option><option>中学2年</option><option>中学3年</option>
+            </select>
+          </div>
+        </div>
         <div class="btn-row">
           <button class="btn primary" onclick="generateReview()">🤖 AIで復習テストを作る</button>
         </div>
@@ -808,16 +816,7 @@ function handleUpload(input, previewId) {
 // =====================
 // Loading helpers
 // =====================
-function safeParseJSON(raw) {
-  raw = raw.replace(/```json|```/g, '').trim();
-  try { return JSON.parse(raw); } catch(e) {}
-  var start = raw.indexOf('[');
-  var end = raw.lastIndexOf(']');
-  if (start !== -1 && end !== -1 && end > start) {
-    try { return JSON.parse(raw.slice(start, end + 1)); } catch(e2) {}
-  }
-  throw new Error('問題の生成に失敗しました。もう一度お試しください。');
-}function showLoad(id) { document.getElementById(id).classList.add('show'); }
+function showLoad(id) { document.getElementById(id).classList.add('show'); }
 function hideLoad(id) { document.getElementById(id).classList.remove('show'); }
 
 // =====================
@@ -839,20 +838,62 @@ async function callClaude(systemPrompt, userMessage) {
 }
 
 // =====================
+// Claude API call with images
+// =====================
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function callClaudeWithImages(systemPrompt, userMessage, files) {
+  const imageContents = await Promise.all(Array.from(files).slice(0, 3).map(async (file) => {
+    const base64 = await fileToBase64(file);
+    return {
+      type: 'image',
+      source: { type: 'base64', media_type: file.type || 'image/jpeg', data: base64 }
+    };
+  }));
+  const messageContent = [
+    ...imageContents,
+    { type: 'text', text: userMessage }
+  ];
+  const res = await fetch('/api/chat-vision', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: systemPrompt, content: messageContent })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'APIエラー: ' + res.status);
+  return data.content || '';
+}
+
+// =====================
 // 復習テスト
 // =====================
 async function generateReview() {
   const count = document.getElementById('q-count').value;
   const type = document.getElementById('q-type').value;
+  const grade = document.getElementById('review-grade').value;
   showLoad('gen-review');
   document.getElementById('quiz-area').innerHTML = '';
   document.getElementById('score-area').innerHTML = '';
   currentQuizzes = []; userAnswers = {}; quizAnswered = 0;
-  const sys = `あなたは中学生向けの${selectedSubject}の復習テストを作るAIです。JSON配列のみ返す。前置き不要。
-形式: [{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}] ansはoptsの正解インデックス(0始まり)。穴埋めや記述の場合もopts配列を使って選択肢を作ること。`;
+  const sys = `あなたは${grade}の${selectedSubject}の復習テストを作るAIです。JSON配列のみ返す。前置き不要。${grade}の学習指導要領の範囲内で出題すること。
+形式: [{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}] ansはoptsの正解インデックス(0始まり)。`;
   try {
-    let raw = await callClaude(sys, `科目:${selectedSubject} タイプ:${type} 問題数:${count}問。中学学習指導要領に基づく問題を作って。`);
-        const qs = safeParseJSON(raw);
+    const uploadInput = document.getElementById('upload-review');
+    const files = uploadInput ? uploadInput.files : [];
+    let raw;
+    if (files && files.length > 0) {
+      raw = await callClaudeWithImages(sys, `科目:${selectedSubject} 学年:${grade} タイプ:${type} 問題数:${count}問。アップロードされた画像（教科書・ノート）の内容をもとに問題を作って。`, files);
+    } else {
+      raw = await callClaude(sys, `科目:${selectedSubject} 学年:${grade} タイプ:${type} 問題数:${count}問。学習指導要領に基づく問題を作って。`);
+    }
+    const qs = safeParseJSON(raw);
     currentQuizzes = qs;
     renderQuiz(qs, 'quiz-area', 'review');
   } catch(e) {
