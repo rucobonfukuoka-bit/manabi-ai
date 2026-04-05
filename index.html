@@ -754,7 +754,7 @@ let quizAnswered = 0;
 function getApiKey() { return localStorage.getItem('manabi_api_key') || ''; }
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
-  if (!key.startsWith('sk-ant-')) { alert('APIキーは sk-ant- で始まる文字列です。確認してください。'); return; }
+  if (!key || key.length < 10) { alert('APIキーを入力してください。'); return; }
   localStorage.setItem('manabi_api_key', key);
   closeApiModal();
   updateApiStatus(true);
