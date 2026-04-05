@@ -810,13 +810,7 @@ function handleUpload(input, previewId) {
 // =====================
 function showLoad(id) { document.getElementById(id).classList.add('show'); }
 function hideLoad(id) { document.getElementById(id).classList.remove('show'); }
-function safeParseJSON(raw) {
-  raw = raw.replace(/```json|```/g, '').trim();
-  try { return JSON.parse(raw); } catch(e) {}
-  const arrMatch = raw.match(/\[[\s\S]*\]/);
-  if (arrMatch) { try { return JSON.parse(arrMatch[0]); } catch(e2) {} }
-  throw new Error('JSONの解析に失敗しました');
-}
+
 // =====================
 // Claude API call
 // =====================
@@ -849,8 +843,7 @@ async function generateReview() {
 形式: [{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}] ansはoptsの正解インデックス(0始まり)。穴埋めや記述の場合もopts配列を使って選択肢を作ること。`;
   try {
     let raw = await callClaude(sys, `科目:${selectedSubject} タイプ:${type} 問題数:${count}問。中学学習指導要領に基づく問題を作って。`);
-    raw = raw.replace(/```json|```/g, '').trim();
-    const qs = safeParseJSON(raw);
+        const qs = safeParseJSON(raw);
     currentQuizzes = qs;
     renderQuiz(qs, 'quiz-area', 'review');
   } catch(e) {
@@ -922,8 +915,7 @@ async function generatePreview() {
 形式:[{"point":"タイトル","detail":"説明（1〜2文）"}]`;
   try {
     let raw = await callClaude(sys, `科目:${subject} 学年:${grade} 単元:${unit}。学習指導要領に基づき授業で気をつけるポイントを5〜7個。`);
-    raw = raw.replace(/```json|```/g, '').trim();
-    const pts = safeParseJSON(raw);
+        const pts = safeParseJSON(raw);
     document.getElementById('preview-result').innerHTML = `
       <div class="card">
         <div class="card-title">📋 ${subject}「${unit}」の予習ポイント</div>
@@ -960,8 +952,7 @@ async function generateMock() {
 形式:[{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}]`;
   try {
     let raw = await callClaude(sys, `科目:${subject} 学年:${grade} 範囲:${range} 難易度:${level} 問題数:${count}問。本番テスト形式で。`);
-    raw = raw.replace(/```json|```/g, '').trim();
-    const qs = safeParseJSON(raw);
+        const qs = safeParseJSON(raw);
     currentQuizzes = qs;
     const area = document.getElementById('mock-result');
     area.innerHTML = `<div class="notice" style="margin-bottom:1rem;">📝 ${subject}「${range}」模擬テスト（${count}問・${level}）</div>`;
@@ -1059,8 +1050,7 @@ async function generatePlan() {
 形式:[{"day":"〇日前など","tasks":["タスク1","タスク2","タスク3"]}]`;
   try {
     let raw = await callClaude(sys, `テストまで${days}日。科目:${subjects}。苦手:${weak}。1日の勉強時間:${time}分。${Math.min(days,7)}日分の学習計画を作って。`);
-    raw = raw.replace(/```json|```/g, '').trim();
-    const plan = safeParseJSON(raw);
+        const plan = safeParseJSON(raw);
     const area = document.getElementById('plan-result');
     area.innerHTML = `<div class="notice" style="margin-bottom:1rem;">📅 ${subjects} テスト対策プラン（残り${days}日）</div>`;
     plan.forEach(d => {
