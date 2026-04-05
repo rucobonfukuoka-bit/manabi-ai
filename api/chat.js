@@ -17,14 +17,16 @@ const handler = async (req, res) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 4000,
         system: system || 'あなたは親切なアシスタントです。',
         messages: [{ role: 'user', content: message }],
       }),
     });
     const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: data.error?.message || 'APIエラー' });
+    if (!response.ok) {
+      return res.status(500).json({ error: data.error?.message || 'Anthropic APIエラー' });
+    }
     const content = data.content?.map(b => b.text || '').join('') || '';
     return res.status(200).json({ content });
   } catch (error) {
