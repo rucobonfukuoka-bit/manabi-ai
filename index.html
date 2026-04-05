@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>まなびAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #5B5FE8;
+      --accent-light: #EEEDFE;
+      --accent2: #FF6B6B;
+      --accent3: #FFB347;
+      --bg: #F7F8FC;
+      --bg-card: #FFFFFF;
+      --text: #1a1a2e;
+      --text-sub: #6b7280;
+      --border: rgba(0,0,0,0.08);
+      --border-hover: rgba(91,95,232,0.4);
+      --success-bg: #EAF3DE;
+      --success-text: #3B6D11;
+      --error-bg: #FCEBEB;
+      --error-text: #A32D2D;
+      --shadow: 0 2px 12px rgba(91,95,232,0.08);
+      --shadow-hover: 0 4px 20px rgba(91,95,232,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .header-title { font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+    .header-sub { font-size: 11px; color: var(--text-sub); }
+    .api-status {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .api-status:hover { border-color: var(--accent); color: var(--accent); }
+    .api-status.ok { border-color: #639922; color: #3B6D11; background: var(--success-bg); }
+
+    /* Main layout */
+    .app-body { display: flex; height: calc(100vh - 56px); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 1rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-sub);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 8px 4px;
+    }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 13px;
+      color: var(--text-sub);
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { background: var(--accent-light); color: var(--accent); }
+    .nav-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      max-width: 800px;
+    }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Section titles */
+    .sec-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .sec-desc { font-size: 13px; color: var(--text-sub); margin-bottom: 1.5rem; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+
+    /* Subject grid */
+    .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-bottom: 1.25rem; }
+    .subject-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .subject-card:hover { border-color: var(--accent); box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+    .subject-card.selected { border-color: var(--accent); background: var(--accent-light); }
+    .subject-card .s-icon { font-size: 26px; display: block; margin-bottom: 6px; }
+    .subject-card .s-name { font-size: 12px; font-weight: 700; color: var(--text); }
+
+    /* Form elements */
+    .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
+    .form-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-select {
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      color: var(--text);
+      background: var(--bg-card);
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .slider-row label { font-size: 12px; color: var(--text-sub); min-width: 90px; }
+    .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+    .slider-val { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 40px; text-align: right; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 700;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .btn.primary:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(91,95,232,0.3); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 1rem;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; font-weight: 700; color: var(--text); }
+    .upload-sub { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+    .preview-item {
+      aspect-ratio: 3/4;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      position: relative;
+      background: var(--bg);
+    }
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.55);
+      color: white; font-size: 9px; padding: 3px 5px; text-align: center;
+    }
+
+    /* Quiz */
+    .quiz-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .quiz-q { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; line-height: 1.7; }
+    .quiz-opts { display: flex; flex-direction: column; gap: 7px; }
+    .quiz-opt {
+      padding: 11px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      transition: all 0.12s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .quiz-opt:hover { background: var(--accent-light); border-color: var(--accent); }
+    .quiz-opt.correct { background: var(--success-bg); border-color: #639922; color: var(--success-text); }
+    .quiz-opt.wrong { background: var(--error-bg); border-color: #E24B4A; color: var(--error-text); }
+    .opt-letter {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .quiz-explain {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #F7F8FC;
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.7;
+      display: none;
+      border-left: 3px solid var(--accent);
+    }
+    .quiz-explain.show { display: block; }
+
+    .score-card {
+      background: linear-gradient(135deg, var(--accent) 0%, #7B7FFF 100%);
+      border-radius: 16px;
+      padding: 1.5rem;
+      color: white;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 20px;
+      animation: fadeIn 0.4s ease;
+    }
+    .score-num { font-size: 48px; font-weight: 700; line-height: 1; }
+    .score-pct { font-size: 20px; opacity: 0.8; }
+    .score-info { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    .progress-wrap { background: rgba(255,255,255,0.3); border-radius: 999px; height: 6px; margin-top: 10px; width: 180px; }
+    .progress-fill { background: white; border-radius: 999px; height: 6px; transition: width 0.6s ease; }
+
+    /* Character */
+    .char-avatar-lg {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--accent3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .speech-bubble {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.8;
+      position: relative;
+      flex: 1;
+    }
+    .speech-bubble::before {
+      content: '';
+      position: absolute;
+      left: -8px; top: 18px;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-right: 8px solid var(--border);
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      left: -6px; top: 18px;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-right: 8px solid var(--bg);
+    }
+
+    /* Point list */
+    .point-list { list-style: none; }
+    .point-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .point-item:last-child { border-bottom: none; }
+    .point-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .point-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .point-detail { font-size: 12px; color: var(--text-sub); margin-top: 3px; line-height: 1.6; }
+
+    /* Plan */
+    .plan-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow);
+    }
+    .plan-day-badge {
+      font-size: 11px; font-weight: 700;
+      color: #534AB7;
+      background: var(--accent-light);
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .plan-tasks { flex: 1; font-size: 13px; color: var(--text); line-height: 1.8; }
+
+    /* Notice */
+    .notice {
+      background: #EEF0FF;
+      border: 1px solid rgba(91,95,232,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #534AB7;
+      margin-bottom: 14px;
+    }
+    .notice.warn {
+      background: #FFF8E6;
+      border-color: rgba(186,117,23,0.2);
+      color: #854F0B;
+    }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-sub);
+    }
+    .loading.show { display: block; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--accent-light);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; }
+
+    /* API Key modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: var(--text-sub); margin-bottom: 1rem; line-height: 1.6; }
+    .modal input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      margin-bottom: 12px;
+    }
+    .modal input:focus { outline: none; border-color: var(--accent); }
+
+    /* Mobile sidebar toggle */
+    .sidebar-toggle {
+      display: none;
+      background: none; border: none;
+      font-size: 20px; cursor: pointer;
+      padding: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .sidebar { display: none; width: 0; }
+      .sidebar.open { display: flex; position: fixed; top: 56px; left: 0; bottom: 0; z-index: 99; width: 220px; }
+      .sidebar-toggle { display: block; }
+      .content { padding: 1rem; }
+      .subject-grid { grid-template-columns: repeat(3, 1fr); }
+      .score-card { flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="header-logo">📚</div>
+    <div>
+      <div class="header-title">まなびAI</div>
+    </div>
+  </div>
+  <button class="api-status" id="api-status-btn" onclick="showApiModal()">
+    🔑 APIキーを設定
+  </button>
+</header>
+
+<div class="app-body">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">学習メニュー</div>
+    <button class="nav-btn active" onclick="switchPanel('review', this)"><span class="nav-icon">✏️</span>復習テスト</button>
+    <button class="nav-btn" onclick="switchPanel('preview', this)"><span class="nav-icon">🔭</span>予習ポイント</button>
+    <button class="nav-btn" onclick="switchPanel('mock', this)"><span class="nav-icon">📝</span>模擬テスト</button>
+    <button class="nav-btn" onclick="switchPanel('character', this)"><span class="nav-icon">⭐</span>キャラサポート</button>
+    <button class="nav-btn" onclick="switchPanel('clean', this)"><span class="nav-icon">🧹</span>テスト清書</button>
+    <button class="nav-btn" onclick="switchPanel('plan', this)"><span class="nav-icon">📅</span>学習計画</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- 復習テスト -->
+    <div id="panel-review" class="panel active">
+      <div class="sec-title">✏️ 復習テスト</div>
+      <div class="sec-desc">科目を選んで教科書・ノートの写真をアップロードすると、AIが問題を自動生成するよ！</div>
+
+      <div class="card">
+        <div class="card-title">科目を選ぶ</div>
+        <div class="subject-grid">
+          <div class="subject-card selected" onclick="selectSubject(this,'数学')"><span class="s-icon">📐</span><span class="s-name">数学</span></div>
+          <div class="subject-card" onclick="selectSubject(this,'英語')"><span class="s-icon">🌍</span><span class="s-name">英語</span></div>
+          <div class="subject-card" onclick="selectSubject(this,'国語')"><span class="s-icon">📖</span><span class="s-name">国語</span></div>
+          <div class="subject-card" onclick="selectSubject(this,'理科')"><span class="s-icon">🔬</span><span class="s-name">理科</span></div>
+          <div class="subject-card" onclick="selectSubject(this,'社会')"><span class="s-icon">🗾</span><span class="s-name">社会</span></div>
+          <div class="subject-card" onclick="selectSubject(this,'その他')"><span class="s-icon">✏️</span><span class="s-name">その他</span></div>
+        </div>
+
+        <div class="upload-zone" onclick="document.getElementById('upload-review').click()">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">写真をタップして選ぶ</div>
+          <div class="upload-sub">教科書・ノートどちらもOK（複数可）</div>
+          <input type="file" id="upload-review" style="display:none" multiple accept="image/*" onchange="handleUpload(this,'preview-review')">
+        </div>
+        <div class="preview-grid" id="preview-review"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">問題数</label>
+            <input type="number" class="form-input" id="q-count" value="5" min="3" max="20">
+          </div>
+          <div class="form-group" style="flex:2">
+            <label class="form-label">問題タイプ</label>
+            <select class="form-select" id="q-type">
+              <option>4択問題</option>
+              <option>穴埋め問題</option>
+              <option>記述問題</option>
+              <option>数学の応用問題</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" onclick="generateReview()">🤖 AIで復習テストを作る</button>
+        </div>
+      </div>
+
+      <div class="loading" id="gen-review"><div class="spinner"></div><div class="loading-text">AIが問題を作っています...</div></div>
+      <div id="quiz-area"></div>
+      <div id="score-area"></div>
+    </div>
+
+    <!-- 予習ポイント -->
+    <div id="panel-preview" class="panel">
+      <div class="sec-title">🔭 予習ポイント</div>
+      <div class="sec-desc">次の授業で気をつけて聞くべきポイントをまとめるよ！</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">科目</label>
+            <select class="form-select" id="prev-subject">
+              <option>数学</option><option>英語</option><option>国語</option><option>理科</option><option>社会</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:3">
+            <label class="form-label">次の授業の単元・ページ</label>
+            <input type="text" class="form-input" id="prev-unit" placeholder="例：二次方程式 p.42〜p.48">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">学年</label>
+            <select class="form-select" id="prev-grade">
+              <option>中学1年</option><option>中学2年</option><option>中学3年</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="generatePreview()">🔭 予習ポイントを作る</button>
+        </div>
+      </div>
+      <div class="loading" id="gen-preview"><div class="spinner"></div><div class="loading-text">ポイントを調べています...</div></div>
+      <div id="preview-result"></div>
+    </div>
+
+    <!-- 模擬テスト -->
+    <div id="panel-mock" class="panel">
+      <div class="sec-title">📝 模擬テスト</div>
+      <div class="sec-desc">学習範囲を指定して、本番に近いテストを作るよ！</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">科目</label>
+            <select class="form-select" id="mock-subject">
+              <option>数学</option><option>英語</option><option>国語</option><option>理科</option><option>社会</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">学年</label>
+            <select class="form-select" id="mock-grade">
+              <option>中学1年</option><option>中学2年</option><option>中学3年</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">学習範囲（単元名）</label>
+            <input type="text" class="form-input" id="mock-range" placeholder="例：一次関数、方程式">
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>問題数</label>
+          <input type="range" min="5" max="30" value="10" id="mock-count" oninput="document.getElementById('mock-count-val').textContent=this.value">
+          <span class="slider-val" id="mock-count-val">10</span>
+        </div>
+        <div class="slider-row">
+          <label>難易度</label>
+          <input type="range" min="1" max="3" value="2" id="mock-level" oninput="updateDiff(this.value)">
+          <span class="slider-val" id="mock-diff-val">標準</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="generateMock()">📝 模擬テストを作る</button>
+        </div>
+      </div>
+      <div class="loading" id="gen-mock"><div class="spinner"></div><div class="loading-text">模擬テストを作成中...</div></div>
+      <div id="mock-result"></div>
+    </div>
+
+    <!-- キャラサポート -->
+    <div id="panel-character" class="panel">
+      <div class="sec-title">⭐ キャラサポート</div>
+      <div class="sec-desc">好きなキャラクターが勉強を教えてくれるよ！</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">キャラクター名</label>
+            <input type="text" class="form-input" id="char-name-input" placeholder="例：ナルト、悟空">
+          </div>
+          <div class="form-group">
+            <label class="form-label">作品名</label>
+            <input type="text" class="form-input" id="anime-name-input" placeholder="例：NARUTO">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">口癖・特徴（任意）</label>
+            <input type="text" class="form-input" id="char-trait-input" placeholder="例：熱血、天才、〜だってばよ">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="setupCharacter()">⭐ キャラクターを設定する</button>
+        </div>
+      </div>
+
+      <div id="char-display"></div>
+
+      <div id="char-study-section" style="display:none">
+        <div class="card">
+          <div class="card-title">📬 キャラクターに質問する</div>
+          <div class="form-row">
+            <input type="text" class="form-input" id="char-question" placeholder="わからないことを聞いてみよう" style="flex:1">
+            <button class="btn primary" onclick="askCharacter()" style="white-space:nowrap">聞く 🚀</button>
+          </div>
+        </div>
+        <div class="loading" id="gen-char"><div class="spinner"></div><div class="loading-text">考え中...</div></div>
+        <div id="char-answer"></div>
+      </div>
+    </div>
+
+    <!-- テスト清書 -->
+    <div id="panel-clean" class="panel">
+      <div class="sec-title">🧹 テスト清書</div>
+      <div class="sec-desc">手書きや赤ペンを消して、何度でも解ける状態にするよ！</div>
+      <div class="notice">💡 Apple Pencilで書き込んだテストを写真に撮ってアップロードしてね</div>
+      <div class="card">
+        <div class="upload-zone" onclick="document.getElementById('upload-clean').click()">
+          <div class="upload-icon">📝</div>
+          <div class="upload-text">テスト用紙の写真をアップロード</div>
+          <input type="file" id="upload-clean" style="display:none" multiple accept="image/*" onchange="handleUpload(this,'preview-clean')">
+        </div>
+        <div class="preview-grid" id="preview-clean"></div>
+
+        <div class="card-title" style="margin-bottom:10px;">消す対象を選ぶ</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" checked id="erase-pencil"> 手書きの回答（鉛筆・ボールペン）
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" checked id="erase-red"> 赤ペンの採点・コメント
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="erase-stamp"> 先生のスタンプ・シール
+        </label>
+
+        <div class="btn-row">
+          <button class="btn primary" onclick="generateClean()">🧹 AIで清書する</button>
+        </div>
+      </div>
+      <div class="loading" id="gen-clean"><div class="spinner"></div><div class="loading-text">清書の指示を生成中...</div></div>
+      <div id="clean-result"></div>
+    </div>
+
+    <!-- 学習計画 -->
+    <div id="panel-plan" class="panel">
+      <div class="sec-title">📅 学習計画</div>
+      <div class="sec-desc">テストに向けた最適なスケジュールを作るよ！</div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">テスト日</label>
+            <input type="date" class="form-input" id="test-date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">テストの科目</label>
+            <input type="text" class="form-input" id="plan-subjects" placeholder="例：数学、英語、理科">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">得意・苦手な科目や単元</label>
+            <input type="text" class="form-input" id="plan-weak" placeholder="例：英語の文法が苦手、数学は得意">
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>1日の勉強時間</label>
+          <input type="range" min="30" max="180" step="15" value="60" id="study-time" oninput="document.getElementById('time-val').textContent=this.value+'分'">
+          <span class="slider-val" id="time-val">60分</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="generatePlan()">📅 学習計画を作る</button>
+        </div>
+      </div>
+      <div class="loading" id="gen-plan"><div class="spinner"></div><div class="loading-text">計画を立てています...</div></div>
+      <div id="plan-result"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal">
+    <h2>🔑 APIキーを設定</h2>
+    <p>Anthropic ConsoleでAPIキーを取得して入力してください。キーはこのブラウザにだけ保存されます。</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="btn-row">
+      <button class="btn primary" onclick="saveApiKey()">保存する</button>
+      <button class="btn" onclick="closeApiModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// State
+// =====================
+let selectedSubject = '数学';
+let charName = '', animeName = '', charTrait = '';
+let currentQuizzes = [];
+let userAnswers = {};
+let quizAnswered = 0;
+
+// =====================
+// API Key management
+// =====================
+function getApiKey() { return localStorage.getItem('manabi_api_key') || ''; }
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-ant-')) { alert('APIキーは sk-ant- で始まる文字列です。確認してください。'); return; }
+  localStorage.setItem('manabi_api_key', key);
+  closeApiModal();
+  updateApiStatus(true);
+}
+function showApiModal() {
+  document.getElementById('api-key-input').value = getApiKey();
+  document.getElementById('api-modal').classList.add('show');
+}
+function closeApiModal() { document.getElementById('api-modal').classList.remove('show'); }
+function updateApiStatus(ok) {
+  const btn = document.getElementById('api-status-btn');
+  if (ok) { btn.textContent = '✅ APIキー設定済み'; btn.classList.add('ok'); }
+  else { btn.textContent = '🔑 APIキーを設定'; btn.classList.remove('ok'); }
+}
+if (getApiKey()) updateApiStatus(true);
+
+// =====================
+// Navigation
+// =====================
+function switchPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth <= 640) document.getElementById('sidebar').classList.remove('open');
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// =====================
+// Subject selection
+// =====================
+function selectSubject(el, name) {
+  document.querySelectorAll('.subject-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSubject = name;
+}
+
+// =====================
+// Upload preview
+// =====================
+function handleUpload(input, previewId) {
+  const grid = document.getElementById(previewId);
+  grid.innerHTML = '';
+  Array.from(input.files).forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    const lbl = document.createElement('div');
+    lbl.className = 'preview-label';
+    lbl.textContent = f.name.length > 12 ? f.name.slice(0, 10) + '…' : f.name;
+    div.appendChild(img); div.appendChild(lbl);
+    grid.appendChild(div);
+  });
+}
+
+// =====================
+// Loading helpers
+// =====================
+function showLoad(id) { document.getElementById(id).classList.add('show'); }
+function hideLoad(id) { document.getElementById(id).classList.remove('show'); }
+
+// =====================
+// Claude API call
+// =====================
+async function callClaude(systemPrompt, userMessage) {
+  const key = getApiKey();
+  if (!key) { showApiModal(); throw new Error('APIキーが未設定です'); }
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: systemPrompt, message: userMessage })
+  });
+  if (!res.ok) throw new Error('APIエラー: ' + res.status);
+  const data = await res.json();
+  return data.content || '';
+}
+
+// =====================
+// 復習テスト
+// =====================
+async function generateReview() {
+  const count = document.getElementById('q-count').value;
+  const type = document.getElementById('q-type').value;
+  showLoad('gen-review');
+  document.getElementById('quiz-area').innerHTML = '';
+  document.getElementById('score-area').innerHTML = '';
+  currentQuizzes = []; userAnswers = {}; quizAnswered = 0;
+  const sys = `あなたは中学生向けの${selectedSubject}の復習テストを作るAIです。JSON配列のみ返す。前置き不要。
+形式: [{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}] ansはoptsの正解インデックス(0始まり)。穴埋めや記述の場合もopts配列を使って選択肢を作ること。`;
+  try {
+    let raw = await callClaude(sys, `科目:${selectedSubject} タイプ:${type} 問題数:${count}問。中学学習指導要領に基づく問題を作って。`);
+    raw = raw.replace(/```json|```/g, '').trim();
+    const qs = JSON.parse(raw);
+    currentQuizzes = qs;
+    renderQuiz(qs, 'quiz-area', 'review');
+  } catch(e) {
+    document.getElementById('quiz-area').innerHTML = `<div class="notice warn">⚠️ ${e.message || '問題の生成に失敗しました。もう一度お試しください。'}</div>`;
+  }
+  hideLoad('gen-review');
+}
+
+function renderQuiz(qs, areaId, mode) {
+  const area = document.getElementById(areaId);
+  area.innerHTML = '';
+  qs.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `<div class="quiz-q">Q${qi + 1}. ${q.q}</div>
+      <div class="quiz-opts" id="opts-${mode}-${qi}">
+        ${q.opts.map((o, oi) => `<div class="quiz-opt" onclick="selectOpt('${mode}',${qi},${oi})">
+          <span class="opt-letter">${String.fromCharCode(65 + oi)}</span>${o}
+        </div>`).join('')}
+      </div>
+      <div class="quiz-explain" id="exp-${mode}-${qi}">${q.exp || ''}</div>`;
+    area.appendChild(card);
+  });
+}
+
+function selectOpt(mode, qi, oi) {
+  if (userAnswers[mode + qi] !== undefined) return;
+  userAnswers[mode + qi] = oi;
+  quizAnswered++;
+  const correct = currentQuizzes[qi].ans;
+  const container = document.getElementById(`opts-${mode}-${qi}`);
+  container.querySelectorAll('.quiz-opt').forEach((el, i) => {
+    if (i === correct) el.classList.add('correct');
+    else if (i === oi && oi !== correct) el.classList.add('wrong');
+  });
+  const expEl = document.getElementById(`exp-${mode}-${qi}`);
+  if (expEl) expEl.classList.add('show');
+  if (quizAnswered >= currentQuizzes.length) showScore(mode);
+}
+
+function showScore(mode) {
+  const correctCount = Object.entries(userAnswers)
+    .filter(([k, v]) => k.startsWith(mode) && currentQuizzes[parseInt(k.replace(mode,''))].ans === v).length;
+  const pct = Math.round(correctCount / currentQuizzes.length * 100);
+  const emoji = pct >= 80 ? '🎉' : pct >= 60 ? '😊' : '💪';
+  document.getElementById('score-area').innerHTML = `
+    <div class="score-card">
+      <div>
+        <div class="score-num">${emoji}</div>
+      </div>
+      <div>
+        <div style="font-size:28px;font-weight:700;">${pct}<span style="font-size:18px">%</span></div>
+        <div class="score-info">${correctCount}/${currentQuizzes.length}問 正解</div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+}
+
+// =====================
+// 予習ポイント
+// =====================
+async function generatePreview() {
+  const subject = document.getElementById('prev-subject').value;
+  const unit = document.getElementById('prev-unit').value || '次の単元';
+  const grade = document.getElementById('prev-grade').value;
+  showLoad('gen-preview');
+  document.getElementById('preview-result').innerHTML = '';
+  const sys = `あなたは中学生向けに授業予習ポイントを教えるAIです。JSON配列のみ返す。
+形式:[{"point":"タイトル","detail":"説明（1〜2文）"}]`;
+  try {
+    let raw = await callClaude(sys, `科目:${subject} 学年:${grade} 単元:${unit}。学習指導要領に基づき授業で気をつけるポイントを5〜7個。`);
+    raw = raw.replace(/```json|```/g, '').trim();
+    const pts = JSON.parse(raw);
+    document.getElementById('preview-result').innerHTML = `
+      <div class="card">
+        <div class="card-title">📋 ${subject}「${unit}」の予習ポイント</div>
+        <ul class="point-list">
+          ${pts.map((p, i) => `<li class="point-item">
+            <div class="point-num">${i + 1}</div>
+            <div><div class="point-title">${p.point}</div><div class="point-detail">${p.detail}</div></div>
+          </li>`).join('')}
+        </ul>
+      </div>`;
+  } catch(e) {
+    document.getElementById('preview-result').innerHTML = `<div class="notice warn">⚠️ ${e.message || '生成に失敗しました。'}</div>`;
+  }
+  hideLoad('gen-preview');
+}
+
+// =====================
+// 模擬テスト
+// =====================
+function updateDiff(v) {
+  document.getElementById('mock-diff-val').textContent = ['','やさしい','標準','むずかしい'][v];
+}
+
+async function generateMock() {
+  const subject = document.getElementById('mock-subject').value;
+  const grade = document.getElementById('mock-grade').value;
+  const range = document.getElementById('mock-range').value || '全範囲';
+  const count = document.getElementById('mock-count').value;
+  const level = ['','やさしい','標準','むずかしい'][document.getElementById('mock-level').value];
+  showLoad('gen-mock');
+  document.getElementById('mock-result').innerHTML = '';
+  currentQuizzes = []; userAnswers = {}; quizAnswered = 0;
+  const sys = `あなたは中学生向け模擬テストを作るAIです。JSON配列のみ返す。
+形式:[{"q":"問題文","opts":["A","B","C","D"],"ans":0,"exp":"解説"}]`;
+  try {
+    let raw = await callClaude(sys, `科目:${subject} 学年:${grade} 範囲:${range} 難易度:${level} 問題数:${count}問。本番テスト形式で。`);
+    raw = raw.replace(/```json|```/g, '').trim();
+    const qs = JSON.parse(raw);
+    currentQuizzes = qs;
+    const area = document.getElementById('mock-result');
+    area.innerHTML = `<div class="notice" style="margin-bottom:1rem;">📝 ${subject}「${range}」模擬テスト（${count}問・${level}）</div>`;
+    const quizDiv = document.createElement('div');
+    quizDiv.id = 'mock-quiz-area';
+    area.appendChild(quizDiv);
+    renderQuiz(qs, 'mock-quiz-area', 'mock');
+  } catch(e) {
+    document.getElementById('mock-result').innerHTML = `<div class="notice warn">⚠️ ${e.message || '生成に失敗しました。'}</div>`;
+  }
+  hideLoad('gen-mock');
+}
+
+// =====================
+// キャラサポート
+// =====================
+function setupCharacter() {
+  charName = document.getElementById('char-name-input').value || 'キャラクター';
+  animeName = document.getElementById('anime-name-input').value || '作品名不明';
+  charTrait = document.getElementById('char-trait-input').value || '';
+  document.getElementById('char-display').innerHTML = `
+    <div class="card">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div class="char-avatar-lg">${charName.charAt(0)}</div>
+        <div class="speech-bubble">
+          やあ！${charName}だぜ！一緒に勉強しようぜ！${charTrait ? `俺の${charTrait}なところ、頼りにしてくれよな！` : ''}
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-sub);">キャラ: ${charName}（${animeName}）${charTrait ? ' / ' + charTrait : ''}</div>
+    </div>`;
+  document.getElementById('char-study-section').style.display = 'block';
+}
+
+async function askCharacter() {
+  const q = document.getElementById('char-question').value.trim();
+  if (!q) return;
+  showLoad('gen-char');
+  document.getElementById('char-answer').innerHTML = '';
+  const sys = `あなたは${animeName}の${charName}というキャラクターです。特徴・口癖:${charTrait}。このキャラになりきって中学生に勉強を教えてください。キャラらしい口調で、わかりやすく200文字以内で答えてください。`;
+  try {
+    const ans = await callClaude(sys, q);
+    document.getElementById('char-answer').innerHTML = `
+      <div class="card">
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div class="char-avatar-lg">${charName.charAt(0)}</div>
+          <div class="speech-bubble">${ans}</div>
+        </div>
+      </div>`;
+    document.getElementById('char-question').value = '';
+  } catch(e) {
+    document.getElementById('char-answer').innerHTML = `<div class="notice warn">⚠️ ${e.message}</div>`;
+  }
+  hideLoad('gen-char');
+}
+
+// =====================
+// テスト清書
+// =====================
+async function generateClean() {
+  const erasePencil = document.getElementById('erase-pencil').checked;
+  const eraseRed = document.getElementById('erase-red').checked;
+  const eraseStamp = document.getElementById('erase-stamp').checked;
+  const targets = [erasePencil && '手書き', eraseRed && '赤ペン', eraseStamp && 'スタンプ'].filter(Boolean).join('、');
+  showLoad('gen-clean');
+  const sys = `あなたは画像処理の専門家AIです。テスト用紙の清書方法を具体的に教えてください。`;
+  try {
+    const ans = await callClaude(sys, `テスト用紙から「${targets}」を消して再利用できるようにするための手順を教えてください。Adobe Scan、Googleフォトなど無料アプリを使った方法も含めて。`);
+    document.getElementById('clean-result').innerHTML = `
+      <div class="card">
+        <div class="card-title">🧹 清書の手順</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">${ans.replace(/\n/g,'<br>')}</div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('clean-result').innerHTML = `<div class="notice warn">⚠️ ${e.message}</div>`;
+  }
+  hideLoad('gen-clean');
+}
+
+// =====================
+// 学習計画
+// =====================
+async function generatePlan() {
+  const testDate = document.getElementById('test-date').value;
+  const subjects = document.getElementById('plan-subjects').value || '複数科目';
+  const weak = document.getElementById('plan-weak').value || 'なし';
+  const time = document.getElementById('study-time').value;
+  if (!testDate) { alert('テスト日を入力してください'); return; }
+  const today = new Date();
+  const test = new Date(testDate);
+  const days = Math.ceil((test - today) / (1000 * 60 * 60 * 24));
+  if (days <= 0) { alert('テスト日は今日より後の日付を選んでください'); return; }
+  showLoad('gen-plan');
+  document.getElementById('plan-result').innerHTML = '';
+  const sys = `あなたは中学生の学習計画を立てるAIです。JSON配列のみ返す。
+形式:[{"day":"〇日前など","tasks":["タスク1","タスク2","タスク3"]}]`;
+  try {
+    let raw = await callClaude(sys, `テストまで${days}日。科目:${subjects}。苦手:${weak}。1日の勉強時間:${time}分。${Math.min(days,7)}日分の学習計画を作って。`);
+    raw = raw.replace(/```json|```/g, '').trim();
+    const plan = JSON.parse(raw);
+    const area = document.getElementById('plan-result');
+    area.innerHTML = `<div class="notice" style="margin-bottom:1rem;">📅 ${subjects} テスト対策プラン（残り${days}日）</div>`;
+    plan.forEach(d => {
+      const div = document.createElement('div');
+      div.className = 'plan-item';
+      div.innerHTML = `<div class="plan-day-badge">${d.day}</div>
+        <div class="plan-tasks">${d.tasks.map(t => '• ' + t).join('<br>')}</div>`;
+      area.appendChild(div);
+    });
+  } catch(e) {
+    document.getElementById('plan-result').innerHTML = `<div class="notice warn">⚠️ ${e.message || '生成に失敗しました。'}</div>`;
+  }
+  hideLoad('gen-plan');
+}
+
+// Init date
+const today2 = new Date();
+document.getElementById('test-date').min = today2.toISOString().split('T')[0];
+const def = new Date(today2);
+def.setDate(def.getDate() + 14);
+document.getElementById('test-date').value = def.toISOString().split('T')[0];
+
+// Close modal on overlay click
+document.getElementById('api-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeApiModal();
+});
+</script>
+</body>
+</html>
